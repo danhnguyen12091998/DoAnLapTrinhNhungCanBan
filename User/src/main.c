@@ -5,6 +5,7 @@
 #include "string.h"
 #include "io.h"
 #include "timer.h"
+#include "spi.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
@@ -19,6 +20,7 @@ volatile char* gp_new_line_str       = "\r\n";
 volatile char* gp_debug              = "Debug !!\r\n";
 volatile char  gp_char_input         = 0;
 char gp_expression[20];
+uint16_t spi_send, spi_receive;
 
 // Init function
 void delay(int ms);
@@ -37,14 +39,22 @@ queue_t g_queue_receive;
 
 int main()
 {
+    
+    // System Init
+    SystemInit();
+    
     // Configure Clock
-    RCC_DeInit();
+    SystemCoreClockUpdate();
 
     // Initialize IO
     io_init();
     
     // Initialize UART
     uart3_init_interrupt();
+    
+    //
+    spi_Init();
+
 
     // Initialize queue
     queue_init(&g_queue_send);
@@ -53,9 +63,26 @@ int main()
     // Push " Input your chracter: " to queue and then ignite sending interrupt
     queue_push_string(&g_queue_send, (char*)gp_input_char_msg, strlen((char*)gp_input_char_msg));
     USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
-
+    
+    
+    led_on(LED_RED);
+    spi_send = 10;
+    spi_sendData(spi_send);
+    spi_receive =  spi_receiveData();
+    if(spi_receive == spi_send) 
+    {
+        led_on(LED_GREEN);
+    }
+    
     for (; ; )
     {
+        /*for(int f = 0; f < 10; f++)
+        {
+            timer_delay(1000);
+            led_on(LED_RED);
+            timer_delay(1000);
+            led_off(LED_RED);
+        }*/
         if (!queue_is_empty(&g_queue_receive))
         {
             gp_char_input = queue_pop(&g_queue_receive);
@@ -135,13 +162,29 @@ void USART3_IRQHandler(void)
 void TIM2_IRQHandler()
 {
     // Checks whether the TIM2 interrupt has occurred or not
-    if (TIM_GetITStatus(TIM2, TIM_IT_Update))
+    if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET)
     {
         GPIO_ToggleBits(LED_PORT, LED_RED);
         
         // Clears the TIM2 interrupt pending bit
         TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
     }
+}
+
+void SPI_IRQHandler(void)
+{
+    if(SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == SET)
+    {
+       SPI_I2S_SendData(SPI1, spi_send);
+       SPI_ITConfig(SPI1, SPI_I2S_FLAG_TXE, DISABLE);
+       SPI_ITConfig(SPI1, SPI_I2S_FLAG_RXNE, ENABLE); 
+    }
+    
+    if(SPI_I2S_GetFlagStatus(SPI3, SPI_I2S_FLAG_RXNE) == SET)
+    {
+        spi_receive = SPI_I2S_ReceiveData(SPI3);
+        SPI_ITConfig(SPI1, SPI_I2S_FLAG_RXNE, DISABLE);        
+    }    
 }
 //-----------------------------FUNCTION------------------------------
 void student_function()
