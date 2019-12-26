@@ -1,9 +1,7 @@
-
-
 #include "spi.h"
 #include "stm32f4xx_spi.h"
 
-void spi_Init(void)
+void spi_init(void)
 {
     // Preparations
     SPI_InitTypeDef spi_init;

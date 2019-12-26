@@ -8,6 +8,6 @@
  */
  
  
-void spi_Init(void);
+void spi_init(void);
 void spi_sendData(uint16_t data);
 uint16_t spi_receiveData(void);

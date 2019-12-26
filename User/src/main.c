@@ -29,6 +29,9 @@ void operation_function(void);
 void simple_led_function(void);
 void advance_led_function(void);
 void timer_function(void);
+void set_led(void);
+void set_direction(void);
+void start(void);
 char* basic_operation(char*);
 int calculator(char*);
 void get_expression(void);
@@ -39,21 +42,21 @@ queue_t g_queue_receive;
 
 int main()
 {
-    
+
     // System Init
     SystemInit();
-    
+
     // Configure Clock
     SystemCoreClockUpdate();
 
     // Initialize IO
     io_init();
-    
+
     // Initialize UART
     uart3_init_interrupt();
-    
+
     //
-    spi_Init();
+    spi_init();
 
 
     // Initialize queue
@@ -63,17 +66,7 @@ int main()
     // Push " Input your chracter: " to queue and then ignite sending interrupt
     queue_push_string(&g_queue_send, (char*)gp_input_char_msg, strlen((char*)gp_input_char_msg));
     USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
-    
-    
-    led_on(LED_RED);
-    spi_send = 10;
-    spi_sendData(spi_send);
-    spi_receive =  spi_receiveData();
-    if(spi_receive == spi_send) 
-    {
-        led_on(LED_GREEN);
-    }
-    
+
     for (; ; )
     {
         /*for(int f = 0; f < 10; f++)
@@ -92,7 +85,7 @@ int main()
                    student_function();
                    break;
                case 50: // operation
-                   operation_function();    
+                   operation_function();
                    break;
                case 51: // simple_led
                    simple_led_function();
@@ -105,7 +98,7 @@ int main()
                default:
                    queue_push_string(&g_queue_send, (char*)gp_dont_support_str, strlen((char*)gp_dont_support_str));
                    queue_push_string(&g_queue_send, (char*)gp_new_line_str, strlen((char*)gp_new_line_str));
-                   USART_ITConfig(USART3, USART_IT_TXE, ENABLE);     
+                   USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
 
             }
             /*// Examine character
@@ -165,7 +158,7 @@ void TIM2_IRQHandler()
     if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET)
     {
         GPIO_ToggleBits(LED_PORT, LED_RED);
-        
+
         // Clears the TIM2 interrupt pending bit
         TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
     }
@@ -177,14 +170,14 @@ void SPI_IRQHandler(void)
     {
        SPI_I2S_SendData(SPI1, spi_send);
        SPI_ITConfig(SPI1, SPI_I2S_FLAG_TXE, DISABLE);
-       SPI_ITConfig(SPI1, SPI_I2S_FLAG_RXNE, ENABLE); 
+       SPI_ITConfig(SPI1, SPI_I2S_FLAG_RXNE, ENABLE);
     }
-    
+
     if(SPI_I2S_GetFlagStatus(SPI3, SPI_I2S_FLAG_RXNE) == SET)
     {
         spi_receive = SPI_I2S_ReceiveData(SPI3);
-        SPI_ITConfig(SPI1, SPI_I2S_FLAG_RXNE, DISABLE);        
-    }    
+        SPI_ITConfig(SPI1, SPI_I2S_FLAG_RXNE, DISABLE);
+    }
 }
 //-----------------------------FUNCTION------------------------------
 void student_function()
@@ -262,10 +255,10 @@ void operation_function()
                             }
                             else
                             {
-                                
+
                             }
                         }
-                    }       
+                    }
                     break;
                 case 98:
                     queue_push_string(&g_queue_send, (char*)p_sub, strlen((char*)p_sub));
@@ -292,10 +285,10 @@ void operation_function()
                             }
                             else
                             {
-                                
+
                             }
                         }
-                    }       
+                    }
                     break;
                 case 99:
                     queue_push_string(&g_queue_send, (char*)p_mul, strlen((char*)p_mul));
@@ -322,12 +315,12 @@ void operation_function()
                             }
                             else
                             {
-                                
+
                             }
                         }
-                    }       
+                    }
                     break;
-                case 100:                    
+                case 100:
                     queue_push_string(&g_queue_send, (char*)p_divide, strlen((char*)p_divide));
                     queue_push_string(&g_queue_send, (char*)p_exp, strlen((char*)p_exp));
                     USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
@@ -359,10 +352,10 @@ void operation_function()
                             }
                             else
                             {
-                                
+
                             }
                         }
-                    }       
+                    }
                     break;
                 default:
                     queue_push_string(&g_queue_send, (char*)gp_dont_support_str, strlen((char*)gp_dont_support_str));
@@ -420,8 +413,8 @@ void simple_led_function(void)
                     USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
                     break;
             }
-        }       
-    }   
+        }
+    }
 }
 
 void get_expression()
@@ -450,7 +443,7 @@ void get_expression()
             }
             else
             {
-                
+
             }
         }
     }
@@ -467,7 +460,7 @@ void timer_function()
        if (!queue_is_empty(&g_queue_receive))
         {
             gp_char_input = queue_pop(&g_queue_receive);
-            if (gp_char_input == 27) 
+            if (gp_char_input == 27)
             {
                 TIM_ITConfig(TIM2, TIM_IT_Update, DISABLE);
                 TIM_Cmd(TIM2, DISABLE);
@@ -477,11 +470,115 @@ void timer_function()
             }
             else
             {
-                
+
             }
         }
     }
 }
+void advance_led_function()
+{
+    char* advance_led_instruction = "4. Advance led \r\na. Set led\r\nb. Set direction\r\nc. Start\r\n ESC: return previous menu";
+    queue_push_string(&g_queue_send, (char*)advance_led_instruction, strlen((char*)advance_led_instruction));
+    USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
+    for(; ;)
+    {
+        if(!queue_is_empty(&g_queue_receive))
+        {
+            gp_char_input = queue_pop(&g_queue_receive);
+            switch(gp_char_input)
+            {
+                case 27:
+                    queue_push_string(&g_queue_send, (char*)gp_input_char_msg, strlen((char*)gp_input_char_msg));
+                    USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
+                    return;
+                case 97:
+                    set_led();
+                    break;
+                case 98:
+                    set_direction();
+                    break;
+                case 99:
+                    start();
+                    break;
+                default:
+                    queue_push_string(&g_queue_send, (char*)gp_dont_support_str, strlen((char*)gp_dont_support_str));
+                    queue_push_string(&g_queue_send, (char*)gp_new_line_str, strlen((char*)gp_new_line_str));
+                    USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
+                    break;
+            }
+        }
+    }
+}
+void set_led()
+{
+    char* set_led_instruction = "a. Set led \r\nPress 1 for start at led 1\r\nPress 2 for start at led 2\r\nPress 3 for start at led 3\r\nPress 4 for start at led 4\r\nESC: return previous menu\r\n";
+    char* advance_led_instruction = "4. Advance led \r\na. Set led\r\nb. Set direction\r\nc. Start\r\n ESC: return previous menu";
+    queue_push_string(&g_queue_send, (char*)set_led_instruction, strlen((char*)set_led_instruction));
+    USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
+    for(; ;)
+    {
+        if(!queue_is_empty(&g_queue_receive))
+        {
+            gp_char_input = queue_pop(&g_queue_receive);
+            switch(gp_char_input)
+            {
+                case 27:
+                    queue_push_string(&g_queue_send, (char*)advance_led_instruction, strlen((char*)advance_led_instruction));
+                    USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
+                    return;
+                case 49:
+                    spi_sendData(49);
+                    break;
+                case 50:
+                    spi_sendData(50);
+                    break;
+                case 51:
+                    spi_sendData(51);
+                    break;
+                case 52:
+                    spi_sendData(52);
+                    break;
+                default:
+                    queue_push_string(&g_queue_send, (char*)gp_dont_support_str, strlen((char*)gp_dont_support_str));
+                    queue_push_string(&g_queue_send, (char*)gp_new_line_str, strlen((char*)gp_new_line_str));
+                    USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
+                    break;
+            }
+        }
+    }
+}
+void set_direction()
+{
+    char* set_direction_instruction = "a. Set direction \r\nPress u for set led go from up to down\r\nPress d for set led go from down to up\r\nESC: return previous menu\r\n";
+    char* advance_led_instruction = "4. Advance led \r\na. Set led\r\nb. Set direction\r\nc. Start\r\n ESC: return previous menu";
+    queue_push_string(&g_queue_send, (char*)set_direction_instruction, strlen((char*)set_direction_instruction));
+    for(; ;)
+    {
+        if(!queue_is_empty(&g_queue_receive))
+        {
+            gp_char_input = queue_pop(&g_queue_receive);
+            switch(gp_char_input)
+            {
+                case 27:
+                    queue_push_string(&g_queue_send, (char*)advance_led_instruction, strlen((char*)advance_led_instruction));
+                    USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
+                    return;
+                case 117:
+                    spi_sendData(117);
+                    break;
+                case 100:
+                    spi_sendData(100);
+                    break;
+                default:
+                    queue_push_string(&g_queue_send, (char*)gp_dont_support_str, strlen((char*)gp_dont_support_str));
+                    queue_push_string(&g_queue_send, (char*)gp_new_line_str, strlen((char*)gp_new_line_str));
+                    USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
+                    break;
+            }
+        }
+    }
+}
+
 //--------------------------MATH FUNCTION----------------------------
 // tinh chieu dai chuoi
 int length(char arr[]){
@@ -612,7 +709,7 @@ int calculator(char a[]){
             return 999999999; // ma loi mau bang 0
         return num1 / num2;
     default:
-        return 111111111; // ma loi khong tim duoc dau 
+        return 111111111; // ma loi khong tim duoc dau
     }
 }
 /* End of file */
