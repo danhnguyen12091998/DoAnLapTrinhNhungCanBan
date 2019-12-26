@@ -549,7 +549,7 @@ void set_led()
 }
 void set_direction()
 {
-    char* set_direction_instruction = "a. Set direction \r\nPress u for set led go from up to down\r\nPress d for set led go from down to up\r\nESC: return previous menu\r\n";
+    char* set_direction_instruction = "b. Set direction \r\nPress u for set led go from up to down\r\nPress d for set led go from down to up\r\nESC: return previous menu\r\n";
     char* advance_led_instruction = "4. Advance led \r\na. Set led\r\nb. Set direction\r\nc. Start\r\n ESC: return previous menu";
     queue_push_string(&g_queue_send, (char*)set_direction_instruction, strlen((char*)set_direction_instruction));
     for(; ;)
@@ -569,6 +569,31 @@ void set_direction()
                 case 100:
                     spi_sendData(100);
                     break;
+                default:
+                    queue_push_string(&g_queue_send, (char*)gp_dont_support_str, strlen((char*)gp_dont_support_str));
+                    queue_push_string(&g_queue_send, (char*)gp_new_line_str, strlen((char*)gp_new_line_str));
+                    USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
+                    break;
+            }
+        }
+    }
+}
+void start()
+{
+    char* set_direction_instruction = "c. Start\r\nPress User Button to change led\r\nESC: return previous menu\r\n";
+    char* advance_led_instruction = "4. Advance led \r\na. Set led\r\nb. Set direction\r\nc. Start\r\n ESC: return previous menu";
+    queue_push_string(&g_queue_send, (char*)set_direction_instruction, strlen((char*)set_direction_instruction));
+    for(; ;)
+    {
+        if(!queue_is_empty(&g_queue_receive))
+        {
+            gp_char_input = queue_pop(&g_queue_receive);
+            switch(gp_char_input)
+            {
+                case 27:
+                    queue_push_string(&g_queue_send, (char*)advance_led_instruction, strlen((char*)advance_led_instruction));
+                    USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
+                    return;
                 default:
                     queue_push_string(&g_queue_send, (char*)gp_dont_support_str, strlen((char*)gp_dont_support_str));
                     queue_push_string(&g_queue_send, (char*)gp_new_line_str, strlen((char*)gp_new_line_str));

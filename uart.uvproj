@@ -529,6 +529,11 @@
               <FileType>1</FileType>
               <FilePath>.\User\src\spi.c</FilePath>
             </File>
+            <File>
+              <FileName>exti.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\User\src\exti.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
